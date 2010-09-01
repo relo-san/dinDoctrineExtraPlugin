@@ -11,12 +11,9 @@
 /**
  * Base form class
  * 
- * @package     dinDoctrineExtraPlugin.lib.form
- * @signed      5
- * @signer      relo_san
- * @author      relo_san [http://relo-san.com/]
- * @since       february 17, 2010
- * @version     SVN: $Id: dinFormDoctrine.class.php 24 2010-02-19 11:30:25Z relo_san $
+ * @package     dinDoctrineExtraPlugin
+ * @subpackage  lib.form
+ * @author      Nicolay N. Zyk <relo.san@gmail.com>
  */
 abstract class dinFormDoctrine  extends sfFormDoctrine
 {
@@ -25,8 +22,6 @@ abstract class dinFormDoctrine  extends sfFormDoctrine
      * Returns true if the current form has some associated i18n objects
      * 
      * @return  boolean     Is the current form has some associated i18n objects
-     * @author  relo_san
-     * @since   february 17, 2010
      */
     public function isI18n()
     {
@@ -40,16 +35,39 @@ abstract class dinFormDoctrine  extends sfFormDoctrine
      * Returns the name of the i18n model
      * 
      * @return  string  The name of the i18n model
-     * @author  relo_san
-     * @since   february 17, 2010
      */
     public function getI18nModelName()
     {
 
-        return $this->getObject()->getTable()->getTemplate( 'Doctrine_Template_I18nMod' )
-            ->getI18n()->getOption( 'className' );
+        return $this->getI18nTemplate()->getI18n()->getOption( 'className' );
 
     } // dinFormDoctrine::getI18nModelName()
+
+
+    /**
+     * Returns the i18nField name of the i18n model
+     * 
+     * @return  string  The i18nField name of the i18n model
+     */
+    public function getI18nModelI18nField()
+    {
+
+        return $this->getI18nTemplate()->getI18n()->getOption( 'i18nField' );
+
+    } // dinFormDoctrine::getI18nModelI18nField()
+
+
+    /**
+     * Get i18n template
+     * 
+     * @return  Doctrine_Template_I18n
+     */
+    public function getI18nTemplate()
+    {
+
+        return $this->getObject()->getTable()->getTemplate( 'Doctrine_Template_I18nMod' );
+
+    } // dinFormDoctrine::getI18nTemplate()
 
 
     /**
@@ -58,8 +76,6 @@ abstract class dinFormDoctrine  extends sfFormDoctrine
      * @param   mixed   $conn   Connection object [optional]
      * @param   array   $forms  Embedded forms [optional]
      * @return  void
-     * @author  relo_san
-     * @since   february 19, 2010
      */
     public function saveEmbeddedForms( $conn = null, $forms = null )
     {
@@ -96,8 +112,6 @@ abstract class dinFormDoctrine  extends sfFormDoctrine
      * 
      * @param   mixed   $conn   Connection object [optional]
      * @return  mixed   The current saved object
-     * @author  relo_san
-     * @since   february 19, 2010
      */
     public function save( $conn = null )
     {
@@ -134,8 +148,6 @@ abstract class dinFormDoctrine  extends sfFormDoctrine
      * Prepare save
      * 
      * @return  void
-     * @author  relo_san
-     * @since   february 19, 2010
      */
     public function preSave()
     {

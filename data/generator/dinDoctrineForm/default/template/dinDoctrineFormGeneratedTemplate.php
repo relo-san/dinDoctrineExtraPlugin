@@ -22,136 +22,241 @@ abstract class Base<?php echo $this->modelName ?>Form extends <?php echo $this->
     public function setup()
     {
 
-        $this-<?php echo '>' ?>setWidgets( array(
-<?php foreach ( $this->getColumns() as $column ): ?>
-            '<?php echo $column->getFieldName() ?>'<?php echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $column->getFieldName() ) ) ?> => new <?php echo $this->getWidgetClassForColumn( $column ) ?>(<?php echo $this->getWidgetOptionsForColumn( $column ) ?>),
-<?php endforeach ?>
-<?php foreach ( $this->getManyToManyRelations() as $relation): ?>
-            '<?php echo $this->underscore( $relation['alias'] ) ?>_list'<?php echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $this->underscore( $relation['alias'] ) . '_list' ) ) ?> => new sfWidgetFormDoctrineChoice( array( 'multiple' => true, 'model' => '<?php echo $relation['table']->getOption('name') ?>' ) ),
-<?php endforeach ?>
-        ) );
+<?php
+echo "        \$this->setWidgets( array(\n";
+foreach ( $this->getColumns() as $column )
+{
+    echo "            '" . $column->getFieldName() . "'";
+    echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $column->getFieldName() ) );
+    echo ' => new ' . $this->getWidgetClassForColumn( $column ) . '(';
+    echo $this->getWidgetOptionsForColumn( $column, 12 ) . "),\n";
+}
+foreach ( $this->getManyToManyRelations() as $relation )
+{
+    echo "            '" . $this->underscore( $relation['alias'] ) . "_list'";
+    echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $this->underscore( $relation['alias'] ) . '_list' ) );
+    echo " => new sfWidgetFormDoctrineChoice( array(\n";
+    echo "                'multiple' => true,\n";
+    echo "                'model' => '" . $relation['table']->getOption( 'name' ) . "'\n";
+    echo "            ) ),\n";
+}
+echo "        ) );\n\n";
 
-        $this->setValidators( array(
-<?php foreach ( $this->getColumns() as $column ): ?>
-            '<?php echo $column->getFieldName() ?>'<?php echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $column->getFieldName() ) ) ?> => new <?php echo $this->getValidatorClassForColumn( $column ) ?>(<?php echo $this->getValidatorOptionsForColumn( $column ) ?>),
-<?php endforeach ?>
-<?php foreach ( $this->getManyToManyRelations() as $relation ): ?>
-            '<?php echo $this->underscore( $relation['alias'] ) ?>_list'<?php echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $this->underscore( $relation['alias'] ) . '_list' ) ) ?> => new sfValidatorDoctrineChoice( array( 'multiple' => true, 'model' => '<?php echo $relation['table']->getOption( 'name' ) ?>', 'required' => false ) ),
-<?php endforeach ?>
-        ) );
+echo "        \$this->setValidators( array(\n";
+foreach ( $this->getColumns() as $column )
+{
+    echo "            '" . $column->getFieldName() . "'";
+    echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $column->getFieldName() ) );
+    echo ' => new ' . $this->getValidatorClassForColumn( $column ) . '(';
+    echo $this->getValidatorOptionsForColumn( $column, 12 ) . "),\n";
+}
+foreach ( $this->getManyToManyRelations() as $relation )
+{
+    echo "            '" . $this->underscore( $relation['alias'] ) . "_list'";
+    echo str_repeat( ' ', $this->getColumnNameMaxLength() - strlen( $this->underscore( $relation['alias'] ) . '_list' ) );
+    echo " => new sfValidatorDoctrineChoice( array(\n";
+    echo "                'multiple' => true,\n";
+    echo "                'model' => '" . $relation['table']->getOption( 'name' ) . "',\n";
+    echo "                'required' => false\n";
+    echo "            ) ),\n";
+}
+echo "        ) );\n\n";
 
-<?php if ( $uniqueColumns = $this->getUniqueColumnNames() ): ?>
-        $this->validatorSchema->setPostValidator(
-<?php if ( count( $uniqueColumns ) > 1 ): ?>
-            new sfValidatorAnd( array(
-<?php foreach ($uniqueColumns as $uniqueColumn): ?>
-                new sfValidatorDoctrineUnique( array( 'model' => '<?php echo $this->table->getOption( 'name' ) ?>', 'column' => array( '<?php echo implode("', '", $uniqueColumn ) ?>' ) ) ),
-<?php endforeach; ?>
-            ) )
-<?php else: ?>
-            new sfValidatorDoctrineUnique( array( 'model' => '<?php echo $this->table->getOption( 'name' ) ?>', 'column' => array( '<?php echo implode("', '", $uniqueColumns[0] ) ?>' ) ) )
-<?php endif ?>
-        );
-<?php endif ?>
+if ( $uniqueColumns = $this->getUniqueColumnNames() )
+{
+echo "        \$this->validatorSchema->setPostValidator(\n";
+    if ( count( $uniqueColumns ) > 1 )
+    {
+        echo "            new sfValidatorAnd( array(\n";
+        foreach ( $uniqueColumns as $uniqueColumn )
+        {
+            echo "                new sfValidatorDoctrineUnique( array(\n";
+            echo "                    'model' => '" . $this->table->getOption( 'name' ) . "',\n";
+            echo "                    'column' => array( '" . implode( "', '", $uniqueColumn ) . "' )\n";
+            echo "                ) ),\n";
+        }
+        echo "            ) )\n";
+    }
+    else
+    {
+        echo "            new sfValidatorDoctrineUnique( array(\n";
+        echo "                'model' => '" . $this->table->getOption( 'name' ) . "',\n";
+        echo "                'column' => array( '" . implode( "', '", $uniqueColumns[0] ) . "' )\n";
+        echo "            ) )\n";
+    }
+echo "        );\n\n";
+}
 
-<?php if ( $this->isI18n() ): ?>
-        <?php echo '$this->' ?>embedI18n( dinConfig::getActiveLanguages() );
-<?php endif ?>
+if ( $this->isI18n() )
+{
+    echo "        \$this->embedI18n( sfConfig::get( 'sf_active_languages', array( 'en' ) ) );\n\n";
+}
 
-        <?php echo '$this->widgetSchema->' ?>setNameFormat( '<?php echo $this->underscore( $this->modelName ) ?>[%s]' );
+echo "        \$this->widgetSchema->setNameFormat( '" . $this->underscore( $this->modelName ) . "[%s]' );\n\n";
 
-        <?php echo '$this->' ?>errorSchema = new sfValidatorErrorSchema( <?php echo '$this->' ?>validatorSchema );
+echo "        \$this->errorSchema = new sfValidatorErrorSchema( \$this->validatorSchema );\n\n";
 
-        <?php echo '$this->' ?>setupInheritance();
-
+echo "        \$this->setupInheritance();\n\n";
+?>
         parent::setup();
 
-    } // Base<?php echo $this->modelName ?>Form::setup()
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::setup()
 
 
     /**
-     * Get model name
+     * Get associated model name
      * 
-     * @return  string  Model name
+     * @return  string  Class name of associated model
      */
     public function getModelName()
     {
 
         return '<?php echo $this->modelName ?>';
 
-    } // Base<?php echo $this->modelName ?>Form::getModelName()
-
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::getModelName()
 
 <?php if ( $this->getManyToManyRelations() ): ?>
+
+    /**
+     * Update defaults from object with relations
+     * 
+     * @return  void
+     */
     public function updateDefaultsFromObject()
     {
 
         parent::updateDefaultsFromObject();
 
-<?php foreach ( $this->getManyToManyRelations() as $relation ): ?>
-        if ( isset( $this->widgetSchema['<?php echo $this->underscore($relation['alias']) ?>_list'] ) )
-        {
-            $this->setDefault( '<?php echo $this->underscore($relation['alias']) ?>_list', $this->object-><?php echo $relation['alias']; ?>->getPrimaryKeys() );
-        }
+<?php
+foreach ( $this->getManyToManyRelations() as $relation )
+{
+    echo "        if ( isset( \$this->widgetSchema['" . $this->underscore( $relation['alias'] ) . "_list'] ) )\n";
+    echo "        {\n";
+    echo "            \$this->setDefault( '" . $this->underscore( $relation['alias'] ) . "_list', \$this->object->" . $relation['alias'] . "->getPrimaryKeys() );\n";
+    echo "        }\n";
+}
+?>
 
-<?php endforeach ?>
-    } // Base<?php echo $this->modelName ?>Form::updateDefaultsFromObject()
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::updateDefaultsFromObject()
 
+<?php endif ?>
+<?php if ( $this->table->hasTemplate( 'NestedSet' ) ): ?>
 
+    public function updateParentIdColumn( $parentId )
+    {
+
+        <?php echo "\$this->parentId = \$parentId;\n" ?>
+
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::updateParentIdColumn()
+
+<?php endif ?>
+<?php if ( $this->getManyToManyRelations() || $this->table->hasTemplate( 'NestedSet' ) ): ?>
+
+    /**
+     * Save objects
+     * 
+     * @param   Doctrine_Connection $con    [optional]
+     * @return  void
+     */
     protected function doSave( $con = null )
     {
 
+<?php
+if ( $this->getManyToManyRelations() )
+{
+    foreach ( $this->getManyToManyRelations() as $relation )
+    {
+        echo "        \$this->save" . $relation['alias'] . "List( \$con );\n";
+    }
+    echo "\n";
+}
+echo "        parent::doSave( \$con );\n\n";
+
+if ( $this->table->hasTemplate( 'NestedSet' ) )
+{
+    echo "        \$node = \$this->object->getNode();\n\n";
+
+    echo "        if ( \$this->parentId != \$this->object->getParentId() || !\$node->isValidNode() )\n";
+    echo "        {\n";
+    echo "            if ( empty( \$this->parentId ) )\n";
+    echo "            {\n";
+    echo "                if ( \$node->isValidNode() )\n";
+    echo "                {\n";
+    echo "                    \$node->makeRoot( \$this->object->getId() );\n";
+    echo "                    \$this->object->save( \$con );\n";
+    echo "                }\n";
+    echo "                else\n";
+    echo "                {\n";
+    echo "                    \$this->object->getTable()->getTree()->createRoot( \$this->object );\n";
+    echo "                }\n";
+    echo "            }\n";
+    echo "            else\n";
+    echo "            {\n";
+    echo "                \$parent = \$this->object->getTable()->find( \$this->parentId );\n";
+    echo "                \$method = ( \$node->isValidNode() ? 'move' : 'insert' ) . 'AsLastChildOf';\n";
+    echo "                \$node->\$method( \$parent );\n";
+    echo "            }\n";
+    echo "        }\n\n";
+}
+?>
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::doSave()
+
+<?php endif ?>
+<?php if ( $this->getManyToManyRelations() ): ?>
 <?php foreach ( $this->getManyToManyRelations() as $relation ): ?>
-        $this->save<?php echo $relation['alias'] ?>List( $con );
-<?php endforeach ?>
-
-        parent::doSave( $con );
-
-    } // Base<?php echo $this->modelName ?>Form::doSave()
 
 
-<?php foreach ( $this->getManyToManyRelations() as $relation ): ?>
+    /**
+     * Save related objects
+     * 
+     * @param   Doctrine_Connection $con    [optional]
+     * @return  void
+     */
     public function save<?php echo $relation['alias'] ?>List( $con = null )
     {
-        if ( !$this->isValid() )
-        {
-            throw $this->getErrorSchema();
-        }
 
-        if ( !isset( $this->widgetSchema['<?php echo $this->underscore($relation['alias']) ?>_list'] ) )
-        {
-            // somebody has unset this widget
-            return;
-        }
+<?php
+echo "        if ( !\$this->isValid() )\n";
+echo "        {\n";
+echo "            throw \$this->getErrorSchema();\n";
+echo "        }\n\n";
 
-        if ( null === $con )
-        {
-            $con = $this->getConnection();
-        }
+echo "        if ( !isset( \$this->widgetSchema['" . $this->underscore( $relation['alias'] ) . "_list'] ) )\n";
+echo "        {\n";
+echo "            // somebody has unset this widget\n";
+echo "            return;\n";
+echo "        }\n\n";
 
-        $existing = $this->object-><?php echo $relation['alias']; ?>->getPrimaryKeys();
-        $values = $this->getValue( '<?php echo $this->underscore( $relation['alias'] ) ?>_list' );
-        if ( !is_array( $values ) )
-        {
-            $values = array();
-        }
+echo "        if ( null === \$con )\n";
+echo "        {\n";
+echo "            \$con = \$this->getConnection();\n";
+echo "        }\n\n";
 
-        $unlink = array_diff( $existing, $values );
-        if ( count( $unlink ) )
-        {
-            $this->object->unlink( '<?php echo $relation['alias'] ?>', array_values( $unlink ) );
-        }
+echo "        \$existing = \$this->object->" . $relation['alias'] . "->getPrimaryKeys();\n";
+echo "        \$values = \$this->getValue( '" . $this->underscore( $relation['alias'] ) . "_list' );\n";
+echo "        if ( !is_array( \$values ) )\n";
+echo "        {\n";
+echo "            \$values = array();\n";
+echo "        }\n\n";
 
-        $link = array_diff( $values, $existing );
-        if ( count( $link ) )
-        {
-            $this->object->link( '<?php echo $relation['alias'] ?>', array_values( $link ) );
-        }
+echo "        \$unlink = array_diff( \$existing, \$values );\n";
+echo "        if ( count( \$unlink ) )\n";
+echo "        {\n";
+echo "            \$this->object->unlink( '" . $relation['alias'] . "', array_values( \$unlink ) );\n";
+echo "        }\n\n";
 
-    } // Base<?php echo $this->modelName ?>Form::save()
+echo "        \$link = array_diff( \$values, \$existing );\n";
+echo "        if ( count( \$link ) )\n";
+echo "        {\n";
+echo "            \$this->object->link( '" . $relation['alias'] . "', array_values( \$link ) );\n";
+echo "        }\n";
 
+?>
+
+    } // Base<?php echo $this->table->getOption( 'name' ) ?>Form::save<?php echo $relation['alias'] ?>List()
 <?php endforeach ?>
+
 <?php endif ?>
-} // Base<?php echo $this->modelName ?>Form
+} // Base<?php echo $this->table->getOption( 'name' ) ?>Form
 
 //EOF

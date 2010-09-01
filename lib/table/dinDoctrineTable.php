@@ -11,92 +11,118 @@
 /**
  * Base class for performing query and update operations for tables
  * 
- * @package     dinDoctrineExtraPlugin.lib.table
- * @signed      4
- * @signer      relo_san
- * @author      relo_san [http://relo-san.com/]
- * @since       january 11, 2010
- * @version     SVN: $Id: DinDoctrineTable.class.php 48 2010-05-31 23:28:21Z relo_san $
+ * @package     dinDoctrineExtraPlugin
+ * @subpackage  lib.table
+ * @author      Nicolay N. Zyk <relo.san@gmail.com>
  */
 class dinDoctrineTable extends Doctrine_Table
 {
 
-    /**
-     * Plugin config.
-     * @var PluginConfiguration object
-     */
     protected
-        $pluginConfig = null,
-        $pluginName = null;
+        $tempQuery = null,
+        $tempAlias = null;
+
+
+    /**
+     * Returns true if the current table has some associated i18n objects
+     * 
+     * @return  boolean Has table some associated i18n objects
+     */
+    public function isI18n()
+    {
+
+        return $this->hasRelation( 'Translation' );
+
+    } // dinDoctrineTable::isI18n()
+
+
+    /**
+     * Add query for processing
+     * 
+     * @param   Doctrine_Query  $q
+     * @param   string          $alias  Table alias [optional]
+     * @return  dinDoctrineTable
+     */
+    public function addQuery( Doctrine_Query $q, $alias = null )
+    {
+
+        $this->tempQuery = $q;
+        $this->tempAlias = is_null( $alias ) ? $q->getRootAlias() : $alias;
+        return $this;
+
+    } // dinDoctrineTable::addQuery()
+
+
+    /**
+     * Remove stored query
+     * 
+     * @return  Doctrine_Query  Last query
+     */
+    public function free()
+    {
+
+        $q = $this->tempQuery;
+        $this->tempQuery = $this->tempAlias = null;
+        return $q;
+
+    } // dinDoctrineTable::free()
 
 
     /**
      * Add query for retrieving data with I18n
      *
-     * @param   object  $q  Doctrine_Query object
-     * @return  Doctrine_Query object
-     * @author  relo_san
-     * @since   january 11, 2010
+     * @param   Doctrine_Query  $q
+     * @return  Doctrine_Query
      */
     public function retrieveWithI18n( Doctrine_Query $q )
     {
 
         if ( $this->isI18n() )
         {
-            $q = $this->joinI18n( $q );
+            $this->addQuery( $q )->joinI18n()->free();
         }
         return $q;
 
-    } // DinDoctrineTable::retrieveWithI18n()
+    } // dinDoctrineTable::retrieveWithI18n()
 
 
     /**
      * Join table with I18n
      * 
-     * @param   object  $q      Doctrine_Query object
-     * @param   string  $alias  Table alias [optional]
-     * @return  Doctrine_Query object
-     * @author  relo_san
-     * @since   march 10, 2010
+     * @return  dinDoctrineTable
      */
-    public function joinI18n( Doctrine_Query $q, $alias = null )
+    public function joinI18n()
     {
 
         if ( !$this->isI18n() )
         {
-            return $q;
+            return $this;
         }
 
-        if ( is_null( $alias ) )
-        {
-            $alias = $q->getRootAlias();
-        }
+        $tAlias = $this->tempQuery->getSqlTableAlias( 'Translation', $this->getComponentName() );
+        $this->tempQuery->leftJoin( $this->tempAlias . '.Translation ' . $tAlias );
+//            ->addWhere( $tAlias . '.lang = ?', sfContext::getInstance()->getUser()->getCulture() );
 
-        $tAlias = $q->getSqlTableAlias( 'Translation', $this->getComponentName() );
-        $q->leftJoin(
-            $alias . '.Translation ' . $tAlias . ' WITH ' . $tAlias . '.lang = ?',
-            sfContext::getInstance()->getUser()->getCulture()
-        );
+        //$this->tempQuery->leftJoin(
+        //    $this->tempAlias . '.Translation ' . $tAlias . ' WITH ' . $tAlias . '.lang = ?',
+        //    sfContext::getInstance()->getUser()->getCulture()
+        //);
 
-        return $q;
+        return $this;
 
-    } // DinDoctrineTable::joinI18n()
+    } // dinDoctrineTable::joinI18n()
 
 
     /**
-     * addSelect
+     * Add select fields
      * 
-     * @return  Doctrine_Query
-     * @author  relo_san
-     * @since   22.03.2010
+     * @return  dinDoctrineTable
      */
-    public function addSelect( Doctrine_Query $q, $columns, $alias = null )
+    public function addSelect( $columns )
     {
 
-        if ( is_null( $alias ) )
-        {
-            $alias = $q->getRootAlias();
-        }
+        $q = $this->tempQuery;
+        $alias = $this->tempAlias;
 
         if ( $isI18n = $this->isI18n() )
         {
@@ -115,55 +141,85 @@ class dinDoctrineTable extends Doctrine_Table
             }
         }
 
-        return $q;
+        return $this;
 
-    } // DinDoctrineTable::addSelect()
+    } // dinDoctrineTable::addSelect()
 
 
     /**
-     * getColumn
+     * Add where condition
      * 
-     * @return  
-     * @author  relo_san
-     * @since   22.03.2010
+     * @return  dinDoctrineTable
      */
-    public function getColumn( Doctrine_Query $q, $column, $alias = null )
+    public function addWhere( $column, $value, $clause = '=' )
     {
 
-        if ( is_null( $alias ) )
+        if ( $col = $this->getColumn( $column ) )
         {
-            $alias = $q->getRootAlias();
+            if ( !is_null( $value ) )
+            {
+                $this->tempQuery->addWhere( $col . ' ' . $clause . ' ?', $value );
+            }
+            else
+            {
+                $this->tempQuery->addWhere( $col . ' ' . $clause );
+            }
         }
+        return $this;
+
+    } // dinDoctrineTable::addWhere()
+
+
+    /**
+     * Add order by condition
+     * 
+     * @param   array   $columns    Columns and directions
+     * @return  dinDoctrineTable
+     */
+    public function addOrderBy( $columns )
+    {
+
+        $rules = array();
+        foreach ( $columns as $col => $rule )
+        {
+            if ( is_int( $col ) && $column = $this->getColumn( $rule ) )
+            {
+                $rules[] = $column;
+            }
+            else if ( !is_int( $col ) && $column = $this->getColumn( $col ) )
+            {
+                $rules[] = $column . ' ' . $rule;
+            }
+        }
+        if ( $rules )
+        {
+            $this->tempQuery->addOrderBy( implode( ', ', $rules ) );
+        }
+        return $this;
+
+    } // dinDoctrineTable::addOrderBy()
+
+
+    /**
+     * Get column
+     * 
+     * @return  string  Column name (with alias)
+     */
+    public function getColumn( $column )
+    {
+
         if ( $this->hasColumn( $column ) )
         {
-            return $alias . '.' . $column;
+            return $this->tempAlias . '.' . $column;
         }
         if ( $this->isI18n() && $this->getI18nTable()->hasColumn( $column ) )
         {
-            return $q->getSqlTableAlias( 'Translation', $this->getComponentName() ) . '.' . $column;
+            return $this->tempQuery->getSqlTableAlias( 'Translation', $this->getComponentName() )
+                . '.' . $column;
         }
         return false;
 
-    } // DinDoctrineTable::getColumn()
-
-
-    /**
-     * getColumnPart
-     * 
-     * @return  
-     * @author  relo_san
-     * @since   10.03.2010
-     */
-    public function getColumnPart( $column, $alias )
-    {
-
-        if ( $this->hasColumn( $column ) )
-        {
-            return $alias . '.' . $column;
-        }
-        return $this->getI18nAlias( $alias ) . '.' . $column;
-
-    } // DinDoctrineTable::getColumnPart()
+    } // dinDoctrineTable::getColumn()
 
 
     /**
@@ -223,37 +279,6 @@ class dinDoctrineTable extends Doctrine_Table
 
 
     /**
-     * Get alias for translation table
-     * 
-     * @param   string  $rootAlias  Root alias [optional]
-     * @return  string  Alias for i18n table (or root if disabled)
-     * @author  relo_san
-     * @since   january 11, 2010
-     */
-    public function getI18nAlias( $rootAlias = '' )
-    {
-
-        return $rootAlias . ( $this->isI18n() ? ( $rootAlias ? '.' : '' ) . 'Translation' : '' );
-
-    } // DinDoctrineTable::getI18nAlias()
-
-
-    /**
-     * Returns true if the current table has some associated i18n objects
-     * 
-     * @return  boolean Has table some associated i18n objects
-     * @author  relo_san
-     * @since   february 17, 2010
-     */
-    public function isI18n()
-    {
-
-        return $this->hasTemplate( 'Doctrine_Template_I18nMod' );
-
-    } // DinDoctrineTable::isI18n()
-
-
-    /**
      * Get i18n table
      * 
      * @return  Doctrine_Table
@@ -277,8 +302,6 @@ class dinDoctrineTable extends Doctrine_Table
      * 
      * @param   object  $q  Doctrine_Query object [optional]
      * @return  Doctrine_Query object
-     * @author  relo_san
-     * @since   january 11, 2010
      */
     public function getSelectQuery( Doctrine_Query $q = null )
     {
@@ -289,7 +312,7 @@ class dinDoctrineTable extends Doctrine_Table
         }
         return $q;
 
-    } // DinDoctrineTable::getSelectQuery()
+    } // dinDoctrineTable::getSelectQuery()
 
 
     /**
@@ -297,84 +320,37 @@ class dinDoctrineTable extends Doctrine_Table
      * 
      * @param   array   $params Query parameters [optional]
      * @return  Doctrine_Query object
-     * @author  relo_san
-     * @since   january 11, 2010
      */
     public function getChoicesQuery( $params = array() )
     {
 
         $q = $this->createQuery();
-        $q = $this->joinI18n( $q );
+        if ( $this->isI18n() )
+        {
+            $this->addQuery( $q )->joinI18n()->free();
+        }
         return $q;
 
-    } // DinDoctrineTable::getChoicesQuery()
+    } // dinDoctrineTable::getChoicesQuery()
 
 
     /**
      * getItemQuery
      * 
      * @return  array   $params Query parameters [optional]
-     * @author  relo_san
-     * @since   15.03.2010
      */
     public function getItemQuery( $params = array() )
     {
 
         $q = $this->createQuery();
-        $q = $this->joinI18n( $q );
+        if ( $this->isI18n() )
+        {
+            $this->addQuery( $q )->joinI18n()->free();
+        }
         return $q;
 
-    } // DinDoctrineTable::getItemQuery()
+    } // dinDoctrineTable::getItemQuery()
 
-
-    /**
-     * Get plugin config
-     * 
-     * @return  void
-     * @author  relo_san
-     * @since   january 11, 2010
-     * @throws  sfConfigurationException if plugin name not exist
-     */
-    public function getPluginConfig()
-    {
-
-        if ( !$this->pluginConfig )
-        {
-            if ( !$this->pluginName )
-            {
-                throw new sfConfigurationException( 'Plugin name must be set for model '
-                    . $this->getComponentName() );
-            }
-            if ( sfContext::hasInstance() )
-            {
-                $this->pluginConfig = sfContext::getInstance()->getConfiguration()
-                    ->getPluginConfiguration( $this->pluginName );
-            }
-            else
-            {
-                $class = ucfirst( $this->pluginName ) . 'Configuration';
-                $this->pluginConfig = new $class( new sfProjectConfiguration() );
-            }
-        }
-        return $this->pluginConfig;
-
-    } // DinDoctrineTable::getPluginConfig()
-
-
-    /**
-     * Get plugin name
-     * 
-     * @return  string  Plugin name
-     * @author  relo_san
-     * @since   february 26, 2010
-     */
-    public function getPluginName()
-    {
-
-        return $this->pluginName;
-
-    } // DinDoctrineTable::getPluginName()
-
-} // DinDoctrineTable
+} // dinDoctrineTable
 
 //EOF

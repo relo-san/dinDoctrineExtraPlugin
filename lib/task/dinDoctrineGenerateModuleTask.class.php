@@ -109,6 +109,8 @@ class dinDoctrineGenerateModuleTask extends sfDoctrineBaseTask
             'UC_MODULE_NAME'    => ucfirst( $arguments['module'] ),
             'MODEL_CLASS'       => $arguments['model'],
             'PLUGIN_NAME'       => $options['plugin'],
+            'PHP'               => '<?php',
+            'AUTHOR'            => dinGeneratorSigner::getAuthor(),
             'DATE'              => strtolower( date( 'F d, Y' ) ),
             'AUTHOR_NAME'       => dinGeneratorSigner::getAuthor(),
         );
@@ -150,8 +152,8 @@ class dinDoctrineGenerateModuleTask extends sfDoctrineBaseTask
         }
 
         // create module definition
-        $this->getFilesystem()->copy( $moduleDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'moduleDefinition.php', $moduleDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Plugin' . ucfirst( $arguments['module'] ) . 'ModuleDefinition.class.php' );
-        $this->getFilesystem()->remove( $moduleDir . '/config/moduleDefinition.php' );
+        //$this->getFilesystem()->copy( $moduleDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'moduleDefinition.php', $moduleDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Plugin' . ucfirst( $arguments['module'] ) . 'ModuleDefinition.class.php' );
+        //$this->getFilesystem()->remove( $moduleDir . '/config/moduleDefinition.php' );
 
         // change module name
         $finder = sfFinder::type( 'file' )->name( '*.php' );
@@ -194,7 +196,7 @@ class dinDoctrineGenerateModuleTask extends sfDoctrineBaseTask
         // move configuration file
         if ( file_exists( $config = $moduleDir . '/lib/configuration.php' ) )
         {
-            if ( file_exists( $target = $moduleDir . '/lib/' . $arguments['module'] . 'GeneratorConfiguration.class.php' ) )
+            if ( file_exists( $target = $moduleDir . '/lib/' . $arguments['module'] . 'GeneratorConfiguration.php' ) )
             {
                 $this->getFilesystem()->remove( $config );
             }
@@ -207,7 +209,7 @@ class dinDoctrineGenerateModuleTask extends sfDoctrineBaseTask
         // move helper file
         if ( file_exists( $config = $moduleDir . '/lib/helper.php' ) )
         {
-            if ( file_exists( $target = $moduleDir . '/lib/' . $arguments['module'] . 'GeneratorHelper.class.php' ) )
+            if ( file_exists( $target = $moduleDir . '/lib/' . $arguments['module'] . 'GeneratorHelper.php' ) )
             {
                 $this->getFilesystem()->remove( $config );
             }
@@ -218,17 +220,17 @@ class dinDoctrineGenerateModuleTask extends sfDoctrineBaseTask
         }
 
         // create module definition
-        if ( file_exists( $config = $moduleDir . '/config/moduleDefinition.php' ) )
-        {
-            if ( file_exists( $target = $moduleDir . '/config/Plugin' . ucfirst( $arguments['module'] ) . 'ModuleDefinition.class.php' ) )
-            {
-                $this->getFilesystem()->remove( $config );
-            }
-            else
-            {
-                $this->getFilesystem()->rename( $config, $target );
-            }
-        }
+        //if ( file_exists( $config = $moduleDir . '/config/moduleDefinition.php' ) )
+        //{
+        //    if ( file_exists( $target = $moduleDir . '/config/Plugin' . ucfirst( $arguments['module'] ) . 'ModuleDefinition.class.php' ) )
+        //    {
+        //        $this->getFilesystem()->remove( $config );
+        //    }
+        //    else
+        //    {
+        //        $this->getFilesystem()->rename( $config, $target );
+        //    }
+        //}
 
         // create lang file
         if ( file_exists( $config = $moduleDir . '/i18n/lang.ru.xml' ) )

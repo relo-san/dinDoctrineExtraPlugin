@@ -23,7 +23,8 @@ class dinGeneratorModelConfig
 
     protected
         $configuration = null,
-        $config = array();
+        $config = array(),
+        $conn;
 
 
     /**
@@ -93,6 +94,312 @@ class dinGeneratorModelConfig
             ? $this->config['classes']['filter_plugin_strategy'] : 'exist';
 
     } // dinGeneratorModelConfig::getFilterPluginStrategy()
+
+
+    /**
+     * Get filter widget class
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   string  $default    Default widget class name
+     * @return  string  Widget class name
+     */
+    public function getFilterWidgetClass( $model, $columnName, $columnType, $default )
+    {
+
+        if ( $model && isset( $this->config['filters'][$model]['fields'][$columnName]['widget']['class'] ) )
+        {
+            return $this->config['filters'][$model]['fields'][$columnName]['widget']['class'];
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['filter']['widget']['class'] ) )
+            {
+                return $this->config['presets'][$preset]['filter']['widget']['class'];
+            }
+        }
+        if ( isset( $this->config['filters']['widgets'][$columnType]['class'] ) )
+        {
+            return $this->config['filters']['widgets'][$columnType]['class'];
+        }
+        return $default;
+
+    } // dinGeneratorModelConfig::getFilterWidgetClass()
+
+
+    /**
+     * Get filter widget options
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   array   $default    Default widget options
+     * @return  array   Widget options
+     */
+    public function getFilterWidgetOptions( $model, $columnName, $columnType, $default )
+    {
+
+        $options = $default;
+        if ( isset( $this->config['filters']['widgets'][$columnType]['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters']['widgets'][$columnType]['options'] );
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['filter']['widget']['options'] ) )
+            {
+                $options = array_merge( $options, $this->config['presets'][$preset]['filter']['widget']['options'] );
+            }
+        }
+        if ( $model && isset( $this->config['filters'][$model]['fields'][$columnName]['widget']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters'][$model]['fields'][$columnName]['widget']['options'] );
+        }
+        return $options;
+
+    } // dinGeneratorModelConfig::getFilterWidgetOptions()
+
+
+    /**
+     * Get filter validator class
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   string  $default    Default validator class name
+     * @return  string  Validator class name
+     */
+    public function getFilterValidatorClass( $model, $columnName, $columnType, $default )
+    {
+
+        if ( $model && isset( $this->config['filters'][$model]['fields'][$columnName]['validator']['class'] ) )
+        {
+            return $this->config['filters'][$model]['fields'][$columnName]['validator']['class'];
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['filter']['validator']['class'] ) )
+            {
+                return $this->config['presets'][$preset]['filter']['validator']['class'];
+            }
+        }
+        if ( isset( $this->config['filters']['validators'][$columnType]['class'] ) )
+        {
+            return $this->config['filters']['validators'][$columnType]['class'];
+        }
+        return $default;
+
+    } // dinGeneratorModelConfig::getFilterValidatorClass()
+
+
+    /**
+     * Get filter validator options
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   array   $default    Default validator options
+     * @return  array   Validator options
+     */
+    public function getFilterValidatorOptions( $model, $columnName, $columnType, $default )
+    {
+
+        $options = $default;
+        if ( isset( $this->config['filters']['validators'][$columnType]['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters']['validators'][$columnType]['options'] );
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['filter']['validator']['options'] ) )
+            {
+                $options = array_merge( $options, $this->config['presets'][$preset]['filter']['validator']['options'] );
+            }
+        }
+        if ( $model && isset( $this->config['filters'][$model]['fields'][$columnName]['validator']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters'][$model]['fields'][$columnName]['validator']['options'] );
+        }
+        return $options;
+
+    } // dinGeneratorModelConfig::getFilterValidatorOptions()
+
+
+    /**
+     * Get form widget class
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   string  $default    Default widget class name
+     * @return  string  Widget class name
+     */
+    public function getFormWidgetClass( $model, $columnName, $columnType, $default, $strict = false )
+    {
+
+        if ( $model && isset( $this->config['forms'][$model]['fields'][$columnName]['widget']['class'] ) )
+        {
+            return $this->config['forms'][$model]['fields'][$columnName]['widget']['class'];
+        }
+        if ( !$strict && isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['form']['widget']['class'] ) )
+            {
+                return $this->config['presets'][$preset]['form']['widget']['class'];
+            }
+        }
+        if ( !$strict && isset( $this->config['forms']['widgets'][$columnType]['class'] ) )
+        {
+            return $this->config['forms']['widgets'][$columnType]['class'];
+        }
+        return $default;
+
+    } // dinGeneratorModelConfig::getFormWidgetClass()
+
+
+    /**
+     * Get form widget options
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   array   $default    Default widget options
+     * @return  array   Widget options
+     */
+    public function getFormWidgetOptions( $model, $columnName, $columnType, $default )
+    {
+
+        $options = $default;
+        if ( isset( $this->config['forms']['widgets'][$columnType]['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms']['widgets'][$columnType]['options'] );
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['form']['widget']['options'] ) )
+            {
+                $options = array_merge( $options, $this->config['presets'][$preset]['form']['widget']['options'] );
+            }
+        }
+        if ( $model && isset( $this->config['forms'][$model]['fields'][$columnName]['widget']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms'][$model]['fields'][$columnName]['widget']['options'] );
+        }
+        return $options;
+
+    } // dinGeneratorModelConfig::getFormWidgetOptions()
+
+
+    /**
+     * Get form validator class
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   string  $default    Default validator class name
+     * @return  string  Validator class name
+     */
+    public function getFormValidatorClass( $model, $columnName, $columnType, $default )
+    {
+
+        if ( $model && isset( $this->config['forms'][$model]['fields'][$columnName]['validator']['class'] ) )
+        {
+            return $this->config['forms'][$model]['fields'][$columnName]['validator']['class'];
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['form']['validator']['class'] ) )
+            {
+                return $this->config['presets'][$preset]['form']['validator']['class'];
+            }
+        }
+        if ( isset( $this->config['forms']['validators'][$columnType]['class'] ) )
+        {
+            return $this->config['forms']['validators'][$columnType]['class'];
+        }
+        return $default;
+
+    } // dinGeneratorModelConfig::getFormValidatorClass()
+
+
+    /**
+     * Get form validator options
+     * 
+     * @param   string  $model      Model name
+     * @param   string  $columnName Column name
+     * @param   string  $columnType Column type
+     * @param   array   $default    Default validator options
+     * @return  array   Validator options
+     */
+    public function getFormValidatorOptions( $model, $columnName, $columnType, $default )
+    {
+
+        $options = $default;
+        if ( isset( $this->config['forms']['validators'][$columnType]['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms']['validators'][$columnType]['options'] );
+        }
+        if ( isset( $this->config['models'][$model]['columns'][$columnName]['preset'] ) )
+        {
+            $preset = $this->config['models'][$model]['columns'][$columnName]['preset'];
+            if ( isset( $this->config['presets'][$preset]['form']['validator']['options'] ) )
+            {
+                $options = array_merge( $options, $this->config['presets'][$preset]['form']['validator']['options'] );
+            }
+        }
+        if ( $model && isset( $this->config['forms'][$model]['fields'][$columnName]['validator']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms'][$model]['fields'][$columnName]['validator']['options'] );
+        }
+        return $options;
+
+    } // dinGeneratorModelConfig::getFormValidatorOptions()
+
+
+    /**
+     * Get virtual columns
+     * 
+     * @return  array   Virtual columns
+     */
+    public function getVirtualColumns( $model, $part = 'form' )
+    {
+
+        $out = array();
+        if ( isset( $this->config[$part . 's'][$model]['fields'] ) && $this->config[$part . 's'][$model]['fields'] )
+        {
+            foreach ( $this->config[$part . 's'][$model]['fields'] as $field => $params )
+            {
+                if ( isset( $params['virtual'] ) && $params['virtual'] )
+                {
+                    $out[$field] = $params;
+                }
+            }
+        }
+        return $out;
+
+    } // dinGeneratorModelConfig::getVirtualColumns()
+
+
+    /**
+     * Get preset data
+     * 
+     * @param   string  Preset name
+     * @return  array   Preset options
+     */
+    public function getPreset( $name )
+    {
+
+        return isset( $this->config['presets'][$name] ) ? $this->config['presets'][$name] : array();
+
+    } // dinGeneratorModelConfig::getPreset()
 
 
     /**
@@ -179,15 +486,18 @@ class dinGeneratorModelConfig
     /**
      * Allow column in model
      * 
-     * @param   string  $model  Model name [optional]
+     * @param   string  $model  Model name
+     * @param   string  $column Column name
+     * @param   string  $part   Model part [optional]
      * @return  boolean Is allow column
      */
-    public function allowColumn( $model, $column )
+    public function allowColumn( $model, $column, $part = 'model' )
     {
 
-        if ( isset( $this->config['models'][$model]['columns'][$column]['disable'] ) )
+        $spart = $part == 'model' ? 'columns' : 'fields';
+        if ( isset( $this->config[$part . 's'][$model][$spart][$column]['disable'] ) )
         {
-            return !$this->config['models'][$model]['columns'][$column]['disable'];
+            return !$this->config[$part . 's'][$model][$spart][$column]['disable'];
         }
         return true;
 
@@ -257,6 +567,8 @@ class dinGeneratorModelConfig
         $definition = $this->prepareModelBehaviors( $model, $definition );
         $definition = $this->prepareModelRelations( $model, $definition );
         $definition = $this->prepareModelIndexes( $model, $definition );
+        
+        //if ( $f-> )
 
         return $definition;
 
@@ -473,7 +785,9 @@ class dinGeneratorModelConfig
             }
             if ( !$this->allowModel( $relation )
                 || ( isset( $def['class'] ) && !$this->allowModel( $def['class'] ) )
-                || ( isset( $def['local'] ) && !isset( $definition['columns'][$def['local']] ) ) )
+                || ( isset( $def['refClass'] ) && !$this->allowModel( $def['refClass'] ) )
+                || ( isset( $def['local'] ) && !isset( $def['refClass'] )
+                && !isset( $definition['columns'][$def['local']] ) ) )
             {
                 unset( $srcs[$relation] );
                 continue;
@@ -528,7 +842,7 @@ class dinGeneratorModelConfig
             }
         }
 
-        // check indexes
+        // check indexes / generate unique names
         foreach ( $srcs as $index => $def )
         {
             foreach ( $def['fields'] as $k => $field )
@@ -544,7 +858,12 @@ class dinGeneratorModelConfig
                 unset( $srcs[$index] );
                 continue;
             }
-            $srcs[$index] = $def;
+            $newIndex = $this->generateUniqueIndexName( $model, $index );
+            $srcs[$newIndex] = $def;
+            if ( $newIndex != $index )
+            {
+                unset( $srcs[$index] );
+            }
         }
         $definition['indexes'] = $srcs;
         if ( !$definition['indexes'] )
@@ -621,6 +940,49 @@ class dinGeneratorModelConfig
         $this->config = $config;
 
     } // dinGeneratorModelConfig::loadConfig()
+
+
+    /**
+     * Get database connection
+     * 
+     * @return  string  Database connection
+     */
+    protected function getDbConn()
+    {
+
+        if ( !$this->conn )
+        {
+            $this->conn = Doctrine_Manager::connection();
+        }
+        return $this->conn;
+
+    } // dinGeneratorModelConfig::getDbConn()
+
+
+    /**
+     * Get database type
+     * 
+     * @return  string  Database type
+     */
+    protected function getDbType()
+    {
+
+        return $this->getDbConn()->getDriverName();
+
+    } // dinGeneratorModelConfig::getDbType()
+
+
+    /**
+     * Generate unique index name
+     * 
+     * @return  Generated name for index
+     */
+    protected function generateUniqueIndexName( $model, $name )
+    {
+
+        return sfInflector::underscore( $model ) . '_' . $name . '_idx';
+
+    } // dinGeneratorModelConfig::generateUniqueIndexName()
 
 } // dinGeneratorModelConfig
 

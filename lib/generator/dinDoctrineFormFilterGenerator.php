@@ -18,6 +18,38 @@
 class dinDoctrineFormFilterGenerator extends sfDoctrineFormFilterGenerator
 {
 
+    protected
+        $widgetClasses = array(
+            'boolean'   => 'sfWidgetFormChoice',
+            'date'      => 'sfWidgetFormFilterDate',
+            'datetime'  => 'sfWidgetFormFilterDate',
+            'timestamp' => 'sfWidgetFormFilterDate',
+            'enum'      => 'sfWidgetFormChoice'
+        ),
+        $widgetOptions = array(
+            'boolean'   => array( 'choices' => "array( '' => 'labels.yesOrNo', 1 => 'labels.yes', 0 => 'labels.no' )" ),
+            'date'      => array( 'from_date' => 'new sfWidgetFormDate()', 'to_date' => 'new sfWidgetFormDate()' ),
+            'datetime'  => array( 'from_date' => 'new sfWidgetFormDate()', 'to_date' => 'new sfWidgetFormDate()' ),
+            'timestamp' => array( 'from_date' => 'new sfWidgetFormDate()', 'to_date' => 'new sfWidgetFormDate()' )
+        ),
+        $validatorClasses = array(
+            'boolean'   => 'sfValidatorChoice',
+            'float'     => 'sfValidatorNumber',
+            'decimal'   => 'sfValidatorNumber',
+            'integer'   => 'sfValidatorInteger',
+            'date'      => 'sfValidatorDateRange',
+            'datetime'  => 'sfValidatorDateRange',
+            'timestamp' => 'sfValidatorDateRange',
+            'enum'      => 'sfValidatorChoice',
+        ),
+        $validatorOptions = array(
+            'boolean'   => array( 'choices' => "array( '', 1, 0 )" ),
+            'date'      => array( 'from_date' => "new sfValidatorDate( array( 'required' => false ) )", 'to_date' => "new sfValidatorDateTime( array( 'required' => false ) )" ),
+            'datetime'  => array( 'from_date' => "new sfValidatorDateTime( array( 'required' => false, 'datetime_output' => 'Y-m-d 00:00:00' ) )", 'to_date' => "new sfValidatorDateTime( array( 'required' => false, 'datetime_output' => 'Y-m-d 23:59:59' ) )" ),
+            'timestamp' => array( 'from_date' => "new sfValidatorDateTime( array( 'required' => false, 'datetime_output' => 'Y-m-d 00:00:00' ) )", 'to_date' => "new sfValidatorDateTime( array( 'required' => false, 'datetime_output' => 'Y-m-d 23:59:59' ) )" )
+        );
+
+
     /**
      * Initialize generator
      * 
@@ -133,70 +165,244 @@ class dinDoctrineFormFilterGenerator extends sfDoctrineFormFilterGenerator
 
 
     /**
-     * Returns a PHP string representing options to pass to a widget for a given column
+     * Get array of sfDoctrineColumn objects that exist on the current model and translation
      * 
-     * @param   sfDoctrineColumn    $column
-     * @return  string  The options to pass to the widget as a PHP string
-     * @author  relo_san
-     * @since   february 7, 2010
-     * @see     sfDoctrineFormFilterGenerator::getWidgetOptionsForColumn()
+     * @return array $columns
      */
-    public function getWidgetOptionsForColumn( $column )
+    public function getColumns()
     {
 
-        $options = array();
-        $withEmpty = $column->isNotNull() && !$column->isForeignKey() ? array( "'with_empty' => false" ) : array();
-        if ( !$withEmpty && !$column->isForeignKey() )
-        {
-            $options[] = "'empty_label' => 'labels.isEmpty'";
-            $options[] = "'template' => '%input% <div class=\"sf-filter-empty\">%empty_checkbox% %empty_label%</div>'";
-        }
+        $parentModel = $this->getParentModel();
+        $parentColumns = $parentModel
+            ? array_keys( Doctrine_Core::getTable( $parentModel )->getColumns() )
+            : array();
 
-        switch ( $column->getDoctrineType() )
+        $columns = array();
+        foreach ( array_diff( array_keys( $this->table->getColumns() ), $parentColumns ) as $name )
         {
-            case 'boolean':
-                $options[] = "'choices' => array( '' => 'labels.yesOrNo', 1 => 'labels.yes', 0 => 'labels.no' )";
-                break;
-            case 'date':
-            case 'datetime':
-            case 'timestamp':
-                $options[] = "'from_date' => new sfWidgetFormDate(), 'to_date' => new sfWidgetFormDate()";
-                $options = array_merge( $options, $withEmpty );
-                break;
-            case 'enum':
-                $values = array( '' => '' );
-                $values = array_merge( $values, $column['values'] );
-                $values = array_combine( $values, $values );
-                $options[] = "'choices' => " . $this->arrayExport( $values );
-                break;
-            default:
-                $options = array_merge( $options, $withEmpty );
-        }
-
-        
-        if ( $column->isForeignKey() )
-        {
-            $options[] = sprintf( '\'model\' => $this->getRelatedModelName( \'%s\' )', $column->getRelationKey( 'alias' ) );
-            $options[] = "'add_empty' => true";
-        }
-        else
-        {
-            switch ( $column->getDoctrineType() )
+            if ( $this->config->allowColumn( $this->table->getComponentName(), $name, 'filter' ) )
             {
-                case 'enum':
-                    $values = $column->getDefinitionKey( 'values' );
-                    $values = array_combine( $values, $values );
-                    $options[] = "'choices' => " . str_replace( "\n", '', $this->arrayExport( $values ) );
-                    break;
+                $columns[] = new sfDoctrineColumn( $name, $this->table );
+            }
+        }
+        if ( $this->table->isI18n() && $i18n = $this->table->getI18nTable() )
+        {
+            foreach ( array_keys( $i18n->getColumns() ) as $name )
+            {
+                if ( in_array( $name, array( 'id', 'lang' ) ) )
+                {
+                    continue;
+                }
+                if ( $this->config->allowColumn( $i18n->getComponentName(), $name, 'filter' ) )
+                {
+                    $columns[] = new sfDoctrineColumn( $name, $i18n );
+                }
             }
         }
 
-        $camName = sfInflector::camelize( $column->getName() );
-        $options[] = "'label' => 'formLabels." . strtolower( substr( $camName, 0, 1 ) ) . substr( $camName, 1 ) . "'";
+        return $columns;
 
-        return count( $options ) ? sprintf( ' array( %s ) ', implode( ', ', $options ) ) : '';
+    } // dinDoctrineFormFilterGenerator::getColumns()
+
+
+    /**
+     * Get widget class for column
+     * 
+     * @param   sfDoctrineColumn    $column
+     * @return  string  Name of widget class
+     */
+    public function getWidgetClassForColumn( $column )
+    {
+
+        $type = $column->getDoctrineType();
+        $default = isset( $this->widgetClasses[$type] )
+            ? $this->widgetClasses[$type]
+            : 'sfWidgetFormFilterInput';
+
+        $name = $this->config->getFilterWidgetClass(
+            $this->modelName, $column->getName(), $type, $default
+        );
+
+        if ( $column->isForeignKey() )
+        {
+            $name = 'sfWidgetFormDoctrineChoice';
+        }
+
+        return $name;
+
+    } // dinDoctrineFormFilterGenerator::getWidgetClassForColumn()
+
+
+    /**
+     * Returns a PHP string representing options to pass to a widget for a given column
+     * 
+     * @param   sfDoctrineColumn    $column
+     * @param   integer             $indent Indentation value [optional]
+     * @return  string  The options to pass to the widget as a PHP string
+     */
+    public function getWidgetOptionsForColumn( $column, $indent = 0 )
+    {
+
+        $type = $column->getDoctrineType();
+        $default = isset( $this->widgetOptions[$type] ) ? $this->widgetOptions[$type] : array();
+        $options = $column->isNotNull() && !$column->isForeignKey()
+            && !in_array( $type, array( 'boolean', 'enum' ) )
+            ? array( 'with_empty' => 'false' )
+            : array();
+        if ( !$options && !$column->isForeignKey() && !in_array( $type, array( 'boolean', 'enum' ) ) )
+        {
+            $options['empty_label'] = "'labels.isEmpty'";
+            $options['template'] = "'%input% <div class=\"sf-filter-empty\">%empty_checkbox% %empty_label%</div>'";
+        }
+
+        if ( $type == 'enum' )
+        {
+            $values = array_merge( array( '' => '' ), $column['values'] );
+            $values = array_combine( $values, $values );
+            $options['choices'] = $this->arrayExport( $values );
+        }
+
+        $camName = sfInflector::camelize( $column->getName() );
+        $options['label'] = "'formLabels." . strtolower( substr( $camName, 0, 1 ) ) . substr( $camName, 1 ) . "'";
+
+        $options = array_merge( $options, $this->config->getFilterWidgetOptions(
+            $this->modelName, $column->getName(), $type, $default
+        ) );
+
+        if ( $column->isForeignKey() )
+        {
+            $options['model'] = '$this->getRelatedModelName( \'' . $column->getRelationKey( 'alias' ) . "' )";
+            $options['add_empty'] = 'true';
+            $options['min'] = null;
+            $options['max'] = null;
+        }
+
+        $out = array();
+        $ni = str_repeat( ' ', $indent );
+        foreach ( $options as $k => $v )
+        {
+            if ( !is_null( $v ) )
+            {
+                $out[] = $ni . "    '" . $k . "' => " . $v;
+            }
+        }
+
+        return count( $out ) ? " array(\n" . implode( ",\n", $out ) . "\n" . $ni .") " : '';
 
     } // dinDoctrineFormFilterGenerator::getWidgetOptionsForColumn()
+
+
+    /**
+     * Get validator class for column
+     * 
+     * @param   sfDoctrineColumn    $column
+     * @return  string  Name of validator class
+     */
+    public function getValidatorClassForColumn( $column )
+    {
+
+        $type = $column->getDoctrineType();
+        $default = isset( $this->validatorClasses[$type] )
+            ? $this->validatorClasses[$type]
+            : 'sfValidatorPass';
+
+        $name = $this->config->getFilterValidatorClass(
+            $this->modelName, $column->getName(), $type, $default
+        );
+
+        if ( $column->isPrimarykey() || $column->isForeignKey() )
+        {
+            $name = 'sfValidatorDoctrineChoice';
+        }
+
+        return $name;
+
+    } // dinDoctrineFormFilterGenerator::getValidatorClassForColumn()
+
+
+    /**
+     * Get validator options for column
+     * 
+     * @param   sfDoctrineColumn    $column
+     * @param   integer             $indent Indentation value [optional]
+     * @return  string  The options to pass to the validator as a PHP string
+     */
+    public function getValidatorOptionsForColumn( $column, $indent = 0 )
+    {
+
+        $type = $column->getDoctrineType();
+        $default = isset( $this->validatorOptions[$type] ) ? $this->validatorOptions[$type] : array();
+        $options = array( 'required' => 'false' );
+
+        if ( $column->isForeignKey() )
+        {
+            $columns = $column->getForeignTable()->getColumns();
+            foreach ( $columns as $name => $col )
+            {
+                if ( isset( $col['primary'] ) && $col['primary'] )
+                {
+                    break;
+                }
+            }
+            $options['model'] = "\$this->getRelatedModelName( '" . $column->getRelationKey( 'alias' ) . "' )";
+            $options['column'] = "'" . $column->getForeignTable()->getFieldName( $name ) . "'";
+        }
+        else if ($column->isPrimaryKey())
+        {
+            $options['model'] = "'" . $this->table->getOption( 'name' ) . "'";
+            $options['column'] = "'" . $column->getFieldName() . "'";
+        }
+        else
+        {
+
+            if ( $type == 'enum' )
+            {
+                $values = array_combine( $column['values'], $column['values'] );
+                $options['choices'] = $this->arrayExport( $values );
+            }
+
+            $options = array_merge( $options, $this->config->getFilterValidatorOptions(
+                $this->modelName, $column->getName(), $type, $default
+            ) );
+
+        }
+
+        $out = array();
+        $ni = str_repeat( ' ', $indent );
+        foreach ( $options as $k => $v )
+        {
+            if ( !is_null( $v ) )
+            {
+                $out[] = $ni . "    '" . $k . "' => " . $v;
+            }
+        }
+
+        return count( $out ) ? " array(\n" . implode( ",\n", $out ) . "\n" . $ni .") " : '';
+
+    } // dinDoctrineFormFilterGenerator::getValidatorOptionsForColumn()
+
+
+    /**
+     * Returns a PHP string representing validator with options for a given column
+     * 
+     * @param   sfDoctrineColumn    $column
+     * @param   integer             $indent Indentation value [optional]
+     * @return  string  Validator with options as a PHP string
+     */
+    public function getValidatorForColumn( $column, $indent = 0 )
+    {
+
+        $format = 'new %s(%s)';
+
+        $class = $this->getValidatorClassForColumn( $column );
+        if ( in_array( $class, array( 'sfValidatorInteger', 'sfValidatorNumber' ) ) )
+        {
+            $format = "new sfValidatorSchemaFilter( 'text', new %s(%s) )";
+        }
+
+        return sprintf( $format, $class, $this->getValidatorOptionsForColumn( $column, $indent ) );
+
+    } // dinDoctrineFormFilterGenerator::getValidatorForColumn()
 
 
     /**
