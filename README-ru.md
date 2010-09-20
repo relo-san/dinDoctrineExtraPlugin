@@ -105,7 +105,7 @@ dinDoctrineExtraPlugin for Symfony 1.3/1.4
 Plugin\*Form / Plugin\*FormFilter будут генерироваться и учитываться в структуре, при false
 соответственно сами классы не генерируются и не учитываются в структуре (т.е. сгенерированный
 основной класс наследует сразу базовый, без учета класса плагина), при 'exist' классы в плагинах
-опять таки не генерируются, но если соответствующий класс Plugin* существует - он включается в
+опять таки не генерируются, но если соответствующий класс Plugin\* существует - он включается в
 структуру наследования. Рекомендуется оставлять 'exist', после чего, если в плагине были ранее
 сгенерированы соответствующие классы и они пустые - просто удалить их. Новые не появятся.
 
@@ -132,31 +132,31 @@ Plugin\*Form / Plugin\*FormFilter будут генерироваться и у�
 **Секция filters**. Управляет генерацией виджетов и других элементов фильтров по-умолчанию.
 Аналогично устроена секция **forms**.
 
-filters:
-    widgets:
-        timestamp:
-            class:              'dinWidgetFormFilterJqueryDate'
-            options:
-                from_date:      'new dinWidgetFormJqueryDate()'
-                to_date:        'new dinWidgetFormJqueryDate()'
-                template:       null
-        integer:
-            class:              'dinWidgetFormNumberRange'
-            options:
-                min:            'new sfWidgetFormInput()'
-                max:            'new sfWidgetFormInput()'
-                template:       null
-        float:
-            class:              'dinWidgetFormNumberRange'
-            options:
-                min:            'new sfWidgetFormInput()'
-                max:            'new sfWidgetFormInput()'
-                template:       null
-    validators:
-        timestamp:
-            class:              'dinValidatorFormFilterDate'
-            options:
-                format:         "'dd/mm/yy'"
+    filters:
+        widgets:
+            timestamp:
+                class:              'dinWidgetFormFilterJqueryDate'
+                options:
+                    from_date:      'new dinWidgetFormJqueryDate()'
+                    to_date:        'new dinWidgetFormJqueryDate()'
+                    template:       null
+            integer:
+                class:              'dinWidgetFormNumberRange'
+                options:
+                    min:            'new sfWidgetFormInput()'
+                    max:            'new sfWidgetFormInput()'
+                    template:       null
+            float:
+                class:              'dinWidgetFormNumberRange'
+                options:
+                    min:            'new sfWidgetFormInput()'
+                    max:            'new sfWidgetFormInput()'
+                    template:       null
+        validators:
+            timestamp:
+                class:              'dinValidatorFormFilterDate'
+                options:
+                    format:         "'dd/mm/yy'"
 
 Данная секция позволяет глобально переопределить виджеты и валидаторы, а также их опции для любого
 типа полей. В данном примере выше "timestamp", "integer" и "float" - это и есть типы полей, которые
@@ -206,9 +206,48 @@ filters:
         OtherModelMany2Many:
             disable:                true
 
+    forms:
+
+        DinMenuItem:
+            fields:
+                root_id:
+                    disable:            true
+                lft:
+                    disable:            true
+                rgt:
+                    disable:            true
+                level:
+                    disable:            true
+
+                menu_id:
+                    widget:
+                        class:          'sfWidgetFormInputHidden'
+                        options:
+                            model:      null
+                            add_empty:  null
+                            label:      null
+                parent_id:
+                    virtual:            true
+                    widget:
+                        class:          'sfWidgetFormDoctrineChoice'
+                        options:
+                            model:      "'DinMenuItem'"
+                            order_by:   "array( 'root_id, lft', '' )"
+                            method:     "'getIndentedName'"
+                            label:      "'formLabels.parent'"
+                            query:      "Doctrine::getTable( 'DinMenuItem' )->createQuery()->addWhere( 'menu_id = ?', sfContext::getInstance()->getRequest()->getParameter( 'menu_id' ) )"
+                    validator:
+                        class:          'sfValidatorDoctrineChoice'
+                        options:
+                            required:   'false'
+                            model:      "'DinMenuItem'"
+
+
 В примере отключена генерация фильтров для I18n и м-м, которые все равно никогда не используются.
 Соответственно не будут сгенерированы ни базовые классы фильтров соответствующих моделей, ни
-основные. Здесь же можно менять типы виджетов для определенных полей и т.д.
+основные. Здесь же можно менять типы виджетов для определенных полей, исключать ненужные поля из
+форм или добавлять виртуальные поля, которых нет в модели, но они нужны в форме/фильтре и т.д. Над
+лаконичностью описаний опций я еще работаю, но пример выше - работает уже сейчас.
 
 Если плагин не ваш, либо вы хотите переопределить его работу в конкретном проекте, вы добавляете в
 директорию lib/config вашего проекта поддиректорию с названием плагина и в нее помещаете опять таки
