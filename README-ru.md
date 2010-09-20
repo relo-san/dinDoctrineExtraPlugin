@@ -235,7 +235,7 @@ Plugin\*Form / Plugin\*FormFilter будут генерироваться и у�
                             order_by:   "array( 'root_id, lft', '' )"
                             method:     "'getIndentedName'"
                             label:      "'formLabels.parent'"
-                            query:      "Doctrine::getTable( 'DinMenuItem' )->createQuery()->addWhere( 'menu_id = ?', sfContext::getInstance()->getRequest()->getParameter( 'menu_id' ) )"
+                            query:      "Doctrine::getTable( 'DinMenuItem' )->getItemQuery()"
                     validator:
                         class:          'sfValidatorDoctrineChoice'
                         options:
