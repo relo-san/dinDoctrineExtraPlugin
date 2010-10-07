@@ -142,6 +142,10 @@ class dinGeneratorModelConfig
     {
 
         $options = $default;
+        if ( isset( $this->config['filters']['widgets']['global']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters']['widgets']['global']['options'] );
+        }
         if ( isset( $this->config['filters']['widgets'][$columnType]['options'] ) )
         {
             $options = array_merge( $options, $this->config['filters']['widgets'][$columnType]['options'] );
@@ -209,6 +213,10 @@ class dinGeneratorModelConfig
     {
 
         $options = $default;
+        if ( isset( $this->config['filters']['validators']['global']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['filters']['validators']['global']['options'] );
+        }
         if ( isset( $this->config['filters']['validators'][$columnType]['options'] ) )
         {
             $options = array_merge( $options, $this->config['filters']['validators'][$columnType]['options'] );
@@ -276,6 +284,10 @@ class dinGeneratorModelConfig
     {
 
         $options = $default;
+        if ( isset( $this->config['forms']['widgets']['global']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms']['widgets']['global']['options'] );
+        }
         if ( isset( $this->config['forms']['widgets'][$columnType]['options'] ) )
         {
             $options = array_merge( $options, $this->config['forms']['widgets'][$columnType]['options'] );
@@ -343,6 +355,10 @@ class dinGeneratorModelConfig
     {
 
         $options = $default;
+        if ( isset( $this->config['forms']['validators']['global']['options'] ) )
+        {
+            $options = array_merge( $options, $this->config['forms']['validators']['global']['options'] );
+        }
         if ( isset( $this->config['forms']['validators'][$columnType]['options'] ) )
         {
             $options = array_merge( $options, $this->config['forms']['validators'][$columnType]['options'] );
