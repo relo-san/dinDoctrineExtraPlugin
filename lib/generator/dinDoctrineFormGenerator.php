@@ -189,6 +189,30 @@ class dinDoctrineFormGenerator extends sfDoctrineFormGenerator
 
 
     /**
+     * Returns an array of relations that represents a many to many relationship.
+     * 
+     * @return  array   An array of relations
+     */
+    public function getManyToManyRelations()
+    {
+
+        $relations = array();
+        foreach ( $this->table->getRelations() as $relation )
+        {
+            if ( Doctrine_Relation::MANY == $relation->getType() && isset( $relation['refTable'] )
+                && ( null === $this->getParentModel() || !Doctrine_Core::getTable( $this->getParentModel() )->hasRelation( $relation->getAlias() ) )
+                && $this->config->allowRelation( $this->table->getComponentName(), $relation->getAlias(), 'form' ) )
+            {
+                $relations[] = $relation;
+            }
+        }
+
+        return $relations;
+
+    } // dinDoctrineFormGenerator::getManyToManyRelations()
+
+
+    /**
      * Get widget class for column
      * 
      * @param   sfDoctrineColumn    $column

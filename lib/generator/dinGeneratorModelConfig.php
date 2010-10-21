@@ -521,6 +521,23 @@ class dinGeneratorModelConfig
 
 
     /**
+     * allowRelation
+     * 
+     * @return  
+     */
+    public function allowRelation( $model, $relation, $part = 'model' )
+    {
+
+        if ( isset( $this->config[$part . 's'][$model]['relations'][$relation]['disable'] ) )
+        {
+            return !$this->config[$part . 's'][$model]['relations'][$relation]['disable'];
+        }
+        return true;
+
+    } // dinGeneratorModelConfig::allowRelation()
+
+
+    /**
      * Get database options for model (or both)
      * 
      * @param   string  $model  Model name [optional]
