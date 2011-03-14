@@ -250,7 +250,7 @@ class dinDoctrineTable extends Doctrine_Table
         $fieldName = $this->getFieldName( $field );
         $alias = $this->hasField( $fieldName )
             ? $q->getRootAlias()
-            : $this->getI18nAlias( $q->getRootAlias() );
+            : $this->getI18nAlias( $q );
 
         $isBegin = $isBegin ? '' : '%';
         return $q->addWhere( $alias . '.' . $fieldName . ' LIKE ?', $isBegin . $source . '%' )
@@ -350,6 +350,20 @@ class dinDoctrineTable extends Doctrine_Table
         return $q;
 
     } // dinDoctrineTable::getItemQuery()
+
+
+    /**
+     * Get I18n alias
+     * 
+     * @param   Doctrine_Query  $q
+     * @return  string  I18n table alias
+     */
+    public function getI18nAlias( Doctrine_Query $q )
+    {
+
+        return $q->getSqlTableAlias( 'Translation', $this->getComponentName() );
+
+    } // dinDoctrineTable::getI18nAlias()
 
 } // dinDoctrineTable
 

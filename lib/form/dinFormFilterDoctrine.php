@@ -109,7 +109,7 @@ abstract class dinFormFilterDoctrine extends sfFormFilterDoctrine
         $fieldName = $this->getFieldName( $field );
         $alias = $this->getTable()->hasField( $fieldName )
             ? $q->getRootAlias()
-            : $this->getTable()->getI18nAlias( $q->getRootAlias() );
+            : $this->getTable()->getI18nAlias( $q );
 
         if ( is_array( $values ) && isset( $values['is_empty'] ) && $values['is_empty'] )
         {
@@ -142,7 +142,7 @@ abstract class dinFormFilterDoctrine extends sfFormFilterDoctrine
         $fieldName = $this->getFieldName( $field );
         $alias = $this->getTable()->hasField( $fieldName )
             ? $q->getRootAlias()
-            : $this->getTable()->getI18nAlias( $q->getRootAlias() );
+            : $this->getTable()->getI18nAlias( $q );
         $q->addWhere( sprintf( '%s.%s = ?', $alias, $fieldName ), $values );
 
     } // dinFormFilterDoctrine::addBooleanQuery()
@@ -164,7 +164,7 @@ abstract class dinFormFilterDoctrine extends sfFormFilterDoctrine
         $fieldName = $this->getFieldName( $field );
         $alias = $this->getTable()->hasField( $fieldName )
             ? $q->getRootAlias()
-            : $this->getTable()->getI18nAlias( $q->getRootAlias() );
+            : $this->getTable()->getI18nAlias( $q );
 
         if ( isset( $values['is_empty'] ) && $values['is_empty'] )
         {
@@ -205,7 +205,7 @@ abstract class dinFormFilterDoctrine extends sfFormFilterDoctrine
         $fieldName = $this->getFieldName( $field );
         $alias = $this->getTable()->hasField( $fieldName )
             ? $q->getRootAlias()
-            : $this->getTable()->getI18nAlias( $q->getRootAlias() );
+            : $this->getTable()->getI18nAlias( $q );
 
         if ( is_array( $values ) )
         {
